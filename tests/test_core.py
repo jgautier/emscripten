@@ -2440,13 +2440,13 @@ The current type of b is: 9
 ''' % str(list(bytearray(open('liblib.so', 'rb').read()))))
     self.emcc_args += ['--pre-js', 'lib_so_pre.js']
 
-  def build_dlfcn_lib(self, lib_src, dirname, filename):
+  def build_dlfcn_lib(self, lib_src, dirname, filename, **args):
     if self.get_setting('WASM'):
       # emcc emits a wasm in this case
-      self.build(lib_src, dirname, filename, js_outfile=False)
+      self.build(lib_src, dirname, filename, js_outfile=False, **args)
       shutil.move(filename + '.o.wasm', os.path.join(dirname, 'liblib.so'))
     else:
-      self.build(lib_src, dirname, filename)
+      self.build(lib_src, dirname, filename, **args)
       shutil.move(filename + '.o.js', os.path.join(dirname, 'liblib.so'))
 
   @needs_dlfcn
@@ -2693,7 +2693,7 @@ The current type of b is: 9
         return &theglobal;
       }
 
-      void lib_fptr() {
+      extern "C" void lib_fptr() {
         printf("Second calling lib_fptr from main.\n");
         parent_func();
         // call it also through a pointer, to check indexizing
@@ -2705,6 +2705,7 @@ The current type of b is: 9
       extern "C" void (*func(int x, void(*fptr)()))() {
         printf("In func: %d\n", x);
         fptr();
+        printf("Returning: %d\n", lib_fptr);
         return lib_fptr;
       }
       '''
@@ -2771,6 +2772,7 @@ The current type of b is: 9
     self.do_run(src, '''\
 In func: 13
 First calling main_fptr from lib.
+Returning: 12
 Second calling lib_fptr from main.
 parent_func called from child
 parent_func called from child
@@ -3537,6 +3539,11 @@ ok
       #include <stdio.h>
       #include "header.h"
 
+      extern int foo;
+
+      void* get_address_flobal() {
+        return (void*)&foo;
+      }
       void* get_address() {
         return (void*)&puts;
       }
@@ -3855,13 +3862,13 @@ ok
   def test_dylink_global_var(self):
     self.dylink_test(main=r'''
       #include <stdio.h>
-      extern int x;
+      extern int foobar;
       int main() {
-        printf("extern is %d.\n", x);
+        printf("extern is %d.\n", foobar);
         return 0;
       }
     ''', side=r'''
-      int x = 123;
+      int foobar = 123;
     ''', expected=['extern is 123.\n'])
 
   @needs_dlfcn

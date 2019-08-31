@@ -721,7 +721,7 @@ class libcxxabi(CXXLibrary, MTLibrary):
   name = 'libc++abi'
   symbols = read_symbols(shared.path_from_root('system', 'lib', 'libcxxabi.symbols'))
   depends = ['libc']
-  cflags = ['-std=c++11', '-Oz', '-D_LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS']
+  cflags = ['-std=c++11', '-Oz', '-D_LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS', '-s', 'DISABLE_EXCEPTION_CATCHING=0']
 
   def get_cflags(self):
     cflags = super(libcxxabi, self).get_cflags()
